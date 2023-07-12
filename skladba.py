@@ -6,7 +6,7 @@ class Skladba:
 # posun ID o 1
     @staticmethod
     def vytvor_id():
-        Skladba.posledni_id =+ 1
+        Skladba.posledni_id += 1
         return Skladba.posledni_id
 
 # volaná funkce při vytváření objektu

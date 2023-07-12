@@ -6,7 +6,7 @@ class Narodnost:
 # posun ID o 1
     @staticmethod
     def vytvor_id():
-        Narodnost.posledni_id =+ 1
+        Narodnost.posledni_id += 1
         return Narodnost.posledni_id
 
 # volaná funkce při vytváření objektu
