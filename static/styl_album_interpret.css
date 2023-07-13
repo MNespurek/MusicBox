@@ -1,0 +1,21 @@
+header {
+    width: 100%;
+    background-color: rgb(196, 199, 201);
+}
+.container text-center {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+.navbar-brand {
+    color: white;
+}
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    background-color: rgb(127, 161, 255);
+}
+nav.navbar {
+    height: 150px;
+}
+
+.navbar {
+    justify-content: center;
+}
