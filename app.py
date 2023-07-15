@@ -1,13 +1,18 @@
 from flask import Flask, render_template, redirect, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import desc, func
-from sqlalchemy.orm import Session
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField, TimeField, IntegerField, DateTimeField, SelectField
+from wtforms.validators import DataRequired
+from wtforms.fields import DateField
+import datetime
 
 app = Flask(__name__)
+
 app.config['SECRET_KEY'] = 'music_Box'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@:5432/db_music_box'
+
 db = SQLAlchemy(app)
-session = Session()
+
 class Zanr(db.Model):
     id_typ_zanr = db.Column(db.Integer, primary_key = True, autoincrement = True)
     nazev = db.Column(db.String, nullable = False)
@@ -43,60 +48,92 @@ class Album_Interpret(db.Model):
     id_album = db.Column(db.Integer, db.ForeignKey('album.id_album'))
     id_interpret = db.Column(db.Integer, db.ForeignKey('interpret.id_interpret'))
 
+class MusicFormular(FlaskForm):
+
+    nazev = StringField('Název', validators=[DataRequired()], render_kw={"class": "form-control", "placeholder" : "Napiš název"})
+    datum_vydani = DateField('Datum vydání', validators=[DataRequired()], format='%d-%m-%Y', render_kw={"class": "form-control"})
+    cislo_stopy = IntegerField('Číslo stopy', validators=[DataRequired()], render_kw={"class": "form-control", "placeholder" : "Napiš číslo stopy"})
+    delka = TimeField('Délka', validators=[DataRequired()], render_kw={ "class": "form-control", "step": "1" })
+    zanry = SelectField('Vyberte žánr', validators=[DataRequired()], render_kw={"class": "form-control"})
+    alba = SelectField('Vyberte album', validators=[DataRequired()], render_kw={"class": "form-control"})
+    skladby = SelectField('Vyberte skladbu', validators=[DataRequired()], render_kw={"class": "form-control"})
+    pridat = SubmitField('Přidat', render_kw={"class": "btn btn-outline-primary"})
+
 @app.route('/')
 def index():
     return render_template('index.html') 
 
 @app.route('/zanr')
 def zanr():
-    return render_template('zanr.html')
+    formular = MusicFormular()
+    return render_template('zanr.html', formular = formular)
 
 @app.route('/pridej_zanr', methods = ['POST'])
 def pridej_zanr():
-    print("volána fce pridej_zanr")
-    nazev = request.form['nazev']
-    zanr = Zanr(nazev = nazev)
+    formular = MusicFormular()
+    zanr = Zanr(nazev = formular.nazev.data)
     db.session.add(zanr)
     db.session.commit()
     return redirect('/ulozit')
 
 @app.route('/skladba')
 def skladba():
-    return render_template('skladba.html')
+    formular = MusicFormular()
+    return render_template('skladba.html', formular = formular)
 
 @app.route('/pridej_skladbu', methods = ['POST'])
 def pridej_skladbu():
-    print("volána fce pridej_skladbu")
-    nazev = request.form['nazev']
-    delka = request.form['delka']
-    skladba = Skladba(nazev = nazev, delka = delka)
-    db.session.add(skladba)
-    db.session.commit()
+    formular = MusicFormular()
+    if formular.validate_on_submit():
+        skladba = Skladba(nazev = formular.nazev.data, delka = formular.delka.data)
+        db.session.add(skladba)
+        db.session.commit()
     return redirect('/ulozit')
 
 @app.route('/album')
 def album():
+    formular = MusicFormular()
     zanry = Zanr.query.all()
-    return render_template('album.html', zanry = zanry)
+    choices = []
+    for zanr in zanry:
+        choice = (zanr.id_typ_zanr, zanr.nazev)
+        choices.append(choice)
+    formular.zanry.choices = choices
+    return render_template('album.html', zanry = zanry, formular = formular)
 
 @app.route('/pridej_album', methods = ['POST'])
 def pridej_album():
-    id_typ_zanr = request.form['id_typ_zanr']
-    nazev = request.form['nazev']
-    datum_vydani = request.form['datum_vydani']
-    album = Album(id_typ_zanr = id_typ_zanr, nazev = nazev, datum_vydani = datum_vydani)
+    formular = MusicFormular()
+    if formular.validate_on_submit():
+        album = Album(id_typ_zanr = formular.zanry.data, nazev = formular.nazev.data, datum_vydani = formular.datum_vydani.data)
     db.session.add(album)
     db.session.commit()
     return redirect('/ulozit')
 
 @app.route('/album_skladba')
 def album_skladba():
+    formular = MusicFormular()
     alba = Album.query.all()
+    seznam_alba = []
+    for album in alba:
+        choice = (album.id_album, album.nazev)
+        seznam_alba.append(choice)
+
+    formular = MusicFormular()
     skladby = Skladba.query.all()
-    return render_template('album_skladba.html', alba = alba, skladby = skladby)
+    seznam_skladby = []
+    for skladba in skladby:
+        choice = (skladba.id_skladba, skladba.nazev)
+        seznam_skladby.append(choice)
+
+    formular.alba.choices = seznam_alba
+    formular.skladby.choices = seznam_skladby
+    
+    return render_template('album_skladba.html', alba = alba, skladby = skladby, formular = formular)
 
 @app.route('/pridej_album_skladbu', methods = ['POST'])
 def pridej_album_skladbu():
+
     cislo_stopy = request.form['cislo_stopy']
     id_album = request.form['id_album']
     id_skladba = request.form['id_skladba']
