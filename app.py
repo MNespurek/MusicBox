@@ -56,6 +56,8 @@ class MusicFormular(FlaskForm):
     delka = TimeField('Délka', validators=[DataRequired()], render_kw={ "class": "form-control", "step": "1" })
     zanry = SelectField('Vyberte žánr', validators=[DataRequired()], render_kw={"class": "form-control"})
     alba = SelectField('Vyberte album', validators=[DataRequired()], render_kw={"class": "form-control"})
+    interpreti = SelectField('Vyberte interpreta', validators=[DataRequired()], render_kw={"class": "form-control"})
+    narodnosti = SelectField('Vyberte národnost', validators=[DataRequired()], render_kw={"class": "form-control"})
     skladby = SelectField('Vyberte skladbu', validators=[DataRequired()], render_kw={"class": "form-control"})
     pridat = SubmitField('Přidat', render_kw={"class": "btn btn-outline-primary"})
 
@@ -94,11 +96,11 @@ def pridej_skladbu():
 def album():
     formular = MusicFormular()
     zanry = Zanr.query.all()
-    choices = []
+    seznam_zanry = []
     for zanr in zanry:
         choice = (zanr.id_typ_zanr, zanr.nazev)
-        choices.append(choice)
-    formular.zanry.choices = choices
+        seznam_zanry.append(choice)
+    formular.zanry.choices = seznam_zanry
     return render_template('album.html', zanry = zanry, formular = formular)
 
 @app.route('/pridej_album', methods = ['POST'])
@@ -133,41 +135,54 @@ def album_skladba():
 
 @app.route('/pridej_album_skladbu', methods = ['POST'])
 def pridej_album_skladbu():
-
-    cislo_stopy = request.form['cislo_stopy']
-    id_album = request.form['id_album']
-    id_skladba = request.form['id_skladba']
-    album_skladba = Album_Skladba(cislo_stopy = cislo_stopy, id_album = id_album, id_skladba = id_skladba)
+    formular = MusicFormular()
+    album_skladba = Album_Skladba(cislo_stopy = formular.cislo_stopy.data, id_album = formular.alba.data, id_skladba = formular.skladby.data)
     db.session.add(album_skladba)
     db.session.commit()
     return redirect('/ulozit')
 
-
 @app.route('/album_interpret')
 def album_interpret():
+    formular = MusicFormular()
     alba = Album.query.all()
+    seznam_alba = []
+    for album in alba:
+        choice = (album.id_album, album.nazev)
+        seznam_alba.append(choice)
+    formular.alba.choices = seznam_alba
     interpreti = Interpret.query.all()
-    return render_template('album_interpret.html', alba = alba, interpreti = interpreti)
+    seznam_interpreti = []
+    for interpret in interpreti:
+        choice = (interpret.id_interpret, interpret.nazev)
+        seznam_interpreti.append(choice)
+    formular.interpreti.choices = seznam_interpreti
+    return render_template('album_interpret.html', alba = alba, interpreti = interpreti, formular = formular)
 
 @app.route('/pridej_album_interpret', methods = ['POST'])
 def pridej_album_interpret():
-    id_album = request.form['id_album']
-    id_interpret = request.form['id_interpret']
-    album_interpret = Album_Interpret(id_album = id_album, id_interpret = id_interpret)
+    formular = MusicFormular()
+    if formular.validate_on_submit():
+        album_interpret = Album_Interpret(id_album = formular.alba.data, id_interpret = formular.interpreti.data)
     db.session.add(album_interpret)
     db.session.commit()
     return redirect('/ulozit')
 
 @app.route('/interpret')
 def interpret():
+    formular = MusicFormular()
     narodnosti = Narodnost.query.all()
-    return render_template('interpret.html', narodnosti = narodnosti)
+    seznam_narodnosti = []
+    for narodnost in narodnosti:
+        choice = (narodnost.id_typ_narodnost, narodnost.nazev)
+        seznam_narodnosti.append(choice)
+    formular.narodnosti.choices = seznam_narodnosti
+    return render_template('interpret.html', formular = formular, narodnosti = narodnosti)
 
 @app.route('/pridej_interpreta', methods = ['POST'])
 def pridej_interpreta():
-    nazev = request.form['nazev']
-    id_typ_narodnost = request.form['id_typ_narodnost']
-    interpret = Interpret(id_typ_narodnost = id_typ_narodnost, nazev = nazev)
+    formular = MusicFormular()
+    if formular.validate_on_submit():
+        interpret = Interpret(id_typ_narodnost = formular.narodnosti.data, nazev = formular.nazev.data)
     db.session.add(interpret)
     db.session.commit()
     return redirect('/ulozit')
@@ -175,13 +190,14 @@ def pridej_interpreta():
 
 @app.route('/narodnost')
 def narodnost():
-    return render_template('narodnost.html')
+    formular = MusicFormular()
+    return render_template('narodnost.html', formular = formular)
 
 @app.route('/pridej_narodnost', methods = ['POST'])
 def pridej_narodnost():
     print("volána fce pridej_zanr")
-    nazev = request.form['nazev']
-    narodnost = Narodnost(nazev = nazev)
+    formular = MusicFormular()
+    narodnost = Narodnost(nazev = formular.nazev.data)
     db.session.add(narodnost)
     db.session.commit()
     return redirect('/ulozit')
