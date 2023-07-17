@@ -9,20 +9,23 @@
 </head>
 <body>
     <header>
-        <div class="container text-center">
-            <div class="row">
-                <nav class="navbar" style="background-color: rgb(196, 199, 201);">
+          {{ div_container.render() }}
+          {{ div_row.render() }}
+          
+                {{ nav.render() }}
                     
-                    <ul class="nav nav-tabs">
+                    {{ ul.render() }}
                         
                                 <div class="col">
-                                <li class="nav-item">
+                                {{ li.render() }}
                                   <a class="nav-link active" aria-current="page" href="{{url_for('index')}}">Domů</a>
                                 </li>
                                 </div>
                                 <div class="col">
                                 <li class="nav-item">
-                                  <a class="nav-link" href="{{url_for('zanr')}}">Žánr</a>
+                                  
+                                  {{ link_zanr.render() }}
+                                  
                                 </li>
                             </div>
                             <div class="col">    
@@ -67,6 +70,9 @@
         </div>
     </header>
       <h1>Vítejte v aplikaci MusicBox vyberte jednu z možností v hlavičce</h1>
+      {{div_center.render()}}
+      {{obrazek.render() }}
+  </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 </body>
 </html>

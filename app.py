@@ -1,10 +1,10 @@
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, render_template_string, request, url_for
+from markupsafe import Markup, escape
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TimeField, IntegerField, DateTimeField, SelectField
 from wtforms.validators import DataRequired
 from wtforms.fields import DateField
-import datetime
 
 app = Flask(__name__)
 
@@ -61,9 +61,86 @@ class MusicFormular(FlaskForm):
     skladby = SelectField('Vyberte skladbu', validators=[DataRequired()], render_kw={"class": "form-control"})
     pridat = SubmitField('Přidat', render_kw={"class": "btn btn-outline-primary"})
 
+class Anchor:
+    def __init__(self, text, endpoint, **kwargs):
+        self.text = text
+        self.url = url_for(endpoint, **kwargs)
+   
+    def render(self):
+        
+        anchor_html = f'<a class="nav-link" href="{self.url}">{self.text}</a>'
+        return Markup(anchor_html)
+
+class Div:
+    def __init__(self, obsah, class_):
+        self.obsah = obsah
+        self.class_ = class_
+
+    def render(self):
+        vlastnosti = f'<div class="{self.class_}">{self.obsah}'
+        print(vlastnosti)
+        return Markup(vlastnosti)
+
+class Form:
+    def __init__(self, action, method):
+        self.action = action
+        self.method = method
+
+    def render(self):
+        vlastnosti = f'<form action="{self.action}" method="{self.method}">'
+        return Markup(vlastnosti)
+    
+class Img:
+    def __init__(self, src, alt='', class_=None, width = None, height = None):
+        self.src = src
+        self.class_=class_
+        self.alt = alt
+        self.width = width
+        self.height = height
+
+    def render(self):
+        obrazek = f'<img src="{self.src}" alt="{self.alt}" class="{self.class_}" width="{self.width}" height="{self.height}>'
+        print (self.class_)
+        return Markup(obrazek)
+
+class Nav:
+    def __init__(self, class_, style):
+        self.class_ = class_
+        self.style = style
+
+    def render(self):
+        nav = f'<nav class="{self.class_}" style="{self.style}">'
+        print(nav)
+        return Markup(nav)
+
+class Ul:
+    def __init__(self, class_):
+        self.class_ = class_
+    
+    def render(self):
+        ul = f'<ul class="{self.class_}">'
+        return Markup(ul)
+    
+class Li:
+    def __init__(self, class_):
+        self.class_ = class_
+    
+    def render(self):
+        li = f'<li class="{self.class_}">'
+        return Markup(li)
+
+
 @app.route('/')
 def index():
-    return render_template('index.html') 
+    link_zanr = Anchor('Žánr', 'zanr')
+    div_container = Div('', "container text-center")
+    div_row = Div('', "row")
+    div_center = Div('', "center")
+    obrazek = Img(src='static/obrazky/music.webp', alt='Music', class_= "center", width=500, height=500)
+    nav = Nav(class_= "navbar", style="background-color: rgb(196, 199, 201);")
+    ul = Ul(class_="nav nav-tabs")
+    li = Ul(class_="nav-item")
+    return render_template('index.html', div_center = div_center, link_zanr = link_zanr, div_container = div_container, div_row = div_row, nav=nav, obrazek = obrazek, ul = ul, li = li) 
 
 @app.route('/zanr')
 def zanr():
@@ -81,6 +158,7 @@ def pridej_zanr():
 @app.route('/skladba')
 def skladba():
     formular = MusicFormular()
+    print(url_for('skladba'))
     return render_template('skladba.html', formular = formular)
 
 @app.route('/pridej_skladbu', methods = ['POST'])
@@ -95,13 +173,14 @@ def pridej_skladbu():
 @app.route('/album')
 def album():
     formular = MusicFormular()
+    form = Form(action="/pridej_album", method="POST")
     zanry = Zanr.query.all()
     seznam_zanry = []
     for zanr in zanry:
         choice = (zanr.id_typ_zanr, zanr.nazev)
         seznam_zanry.append(choice)
     formular.zanry.choices = seznam_zanry
-    return render_template('album.html', zanry = zanry, formular = formular)
+    return render_template('album.html', zanry = zanry, formular = formular, form = form)
 
 @app.route('/pridej_album', methods = ['POST'])
 def pridej_album():
